@@ -177,15 +177,15 @@ void lineFollow(){
   if(chargerToRight()){
     buzzer.playNote(NOTE_C(4),100,10);
 
-    charge();
+    charge(speedL, speedR);
   }
 }
 
-void charge(){
+void charge(speedL, speedR){
   if(chargeCheck()){
     motors.setSpeeds(200, 0);
     delay(500);               //Snu ca. 90 grader høyre
-    while(!aboveDarkSpot()){
+    while(!aboveDarkSpot()){  //Imens bilen ikke er ved ladestasjon
       motors.setSpeeds(speedL, speedR);
     }
     
@@ -193,10 +193,11 @@ void charge(){
     motors.setSpeeds(100, -100);
     delay(1500);                 //Snu ca. 180 grader høyre
 
-    while(!aboveDarkSpot()){
+    while(!aboveDarkSpot()){  //Imens bilen ikke er tilbake ved veien
       motors.setSpeeds(speedL, speedR);
     }
 
     motors.setSpeeds(200, 0);
+    delay(500);
   }
 }
