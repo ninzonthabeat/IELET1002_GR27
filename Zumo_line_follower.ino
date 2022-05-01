@@ -177,7 +177,7 @@ void lineFollow(){
   if(chargerToRight()){
     buzzer.playNote(NOTE_C(4),100,10);
 
-    charge(speedL, speedR);
+    charge(int16_t speedL, int16_t speedR);
   }
 }
 
