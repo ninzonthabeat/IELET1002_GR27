@@ -177,11 +177,11 @@ void lineFollow(){
   if(chargerToRight()){
     buzzer.playNote(NOTE_C(4),100,10);
 
-    charge(int16_t speedL, int16_t speedR); //What var det jeg tenkte her?
+    charge(speedL, speedR);
   }
 }
 
-void charge(speedL, speedR){
+void charge(int16_t speedL, int16_t speedR){
   if(chargeCheck()){
     motors.setSpeeds(200, 0);
     delay(500);               //Snu ca. 90 grader høyre
