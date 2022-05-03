@@ -32,6 +32,7 @@ float distance;
 // Funksjon for speedometer
 float speedometer(){
   static uint8_t lastDisplayTime;
+  float nowSpeed;
 
   if ((uint8_t)(millis() - lastDisplayTime) >= 100){
 
@@ -43,7 +44,7 @@ float speedometer(){
   
     // Regner ut avstand
     float average = ((countsLeft/909.7)+(countsRight/909.7))/2;
-    float nowSpeed = (average *3.14*(0.078))/0.1;
+    nowSpeed = (average *3.14*(0.078))/0.1;
 
     // Legger til på avstand
     distance += (average*3.14*0.078);
@@ -54,8 +55,10 @@ float speedometer(){
     display.gotoXY(0, 0);
     display.print(nowSpeed);
     display.gotoXY(0, 1);
-    display.print(distance); 
+    display.print(distance);
   }
+
+  return nowSpeed;
 }
 
 
@@ -98,27 +101,22 @@ void loop() {
   speedometer();
 
   readSensors();
+
+  while(Serial1.available() > 0){
+    Serial1.println(speedometer());
+    /*
+    int inbyte = Serial1.read();
+    if(String(inbyte) == "update"){
+      float message[] = {speedometer(), 50};
+      Serial1.print(message);
+    }*/
+  }
   
   if(chargerToRight()){ //Dersom lader til høyre og trenger lading
 
     buzzer.playNote(NOTE_G(4),50,15);
     turn('R');
-    /*
-    turn('R');
-    do {
-      lineFollow();
-    } while(aboveDarkSpot() == false);
     
-    placeholdCharge();
-    
-    turn('U');
-    do{
-      lineFollow();
-    } while(aboveDarkSpot() == false);
-
-    turn('R');
-
-    //charge();*/
   }
   if(aboveDarkSpot() == true && needCharge == true){
     motors.setSpeeds(0,0);
