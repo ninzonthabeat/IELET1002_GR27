@@ -1,5 +1,6 @@
 #include <Wire.h>
 #include <Zumo32U4.h>
+#include "TurnSensor.h"
 
 Zumo32U4Motors motors;
 Zumo32U4ButtonA buttonA;
@@ -84,6 +85,7 @@ void setup() {
   buttonA.waitForButton();  //Venter til knapp A trykket
   delay(500);              //Venter til knappetrykker har fjernet pølsefingrene
   calibrateSensors();
+  turnSensorSetup();
 }
 
 
@@ -94,9 +96,85 @@ void loop() {
 
   lineFollow();
   speedometer();
+
+  readSensors();
+  
+  if(chargerToRight()){ //Dersom lader til høyre og trenger lading
+
+    buzzer.playNote(NOTE_G(4),50,15);
+    turn('R');
+    /*
+    turn('R');
+    do {
+      lineFollow();
+    } while(aboveDarkSpot() == false);
+    
+    placeholdCharge();
+    
+    turn('U');
+    do{
+      lineFollow();
+    } while(aboveDarkSpot() == false);
+
+    turn('R');
+
+    //charge();*/
+  }
+  if(aboveDarkSpot() == true && needCharge == true){
+    motors.setSpeeds(0,0);
+    placeholdCharge();
+    turn('U');
+  } else if (aboveDarkSpot() == true && needCharge == false){
+    turn('R');
+  }
 }
 
 
+
+void turn(char dir){
+
+  //Initierer startverdi for å lese vinkel i løpet av svingen
+  int angle;
+  
+  switch(dir){
+    
+    case 'L':
+      turnSensorReset();                                  //Resetter svingsensoren før sving
+      motors.setSpeeds(-100, 100);
+      angle = 0;
+      do {                                                //Do-while utfører sjekk hver gang etter at loopen har kjørt 
+        delay(1);
+        turnSensorUpdate();                               //Oppdater sensor
+        angle = (((int32_t)turnAngle >> 16) * 360) >> 16; //Oppdater avlest vinkel
+      } while (angle < 90);                               //Imens bilen ikke har svingt 90 grader
+      buzzer.playNote(NOTE_C(4),500,15);
+      break;
+
+    case 'R':
+      turnSensorReset();
+      motors.setSpeeds(100, -100);
+      angle = 0;
+      do {
+        delay(1);
+        turnSensorUpdate();
+        angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
+      } while (angle > -90);
+      buzzer.playNote(NOTE_C(4),500,15);
+      break;
+
+    case 'U':
+      turnSensorReset();
+      motors.setSpeeds(-100, 100);
+      angle = 0;
+      do {
+        delay(1);
+        turnSensorUpdate();
+        angle = (((int32_t)turnAngle >> 16) * 360) >> 16;
+      } while (angle < 170);                              //ved 180 grader vil den fortsette å rotere
+      buzzer.playNote(NOTE_C(4),500,15);
+      break;
+  }
+}
 
 
 void calibrateSensors()
@@ -140,13 +218,20 @@ bool aboveDark(uint8_t sensor)
 
 bool aboveDarkSpot()  //Dersom alle sensorene er aktiverte er bilen over et svart område
 {
-  return aboveDark(0) && aboveDark(1) && aboveDark(2) && aboveDark(3) && aboveDark(4);
+  if(aboveDark(0) == true && aboveDark(1) == true && aboveDark(2) == true && aboveDark(3) == true && aboveDark(4) == true){
+    return true;
+  } else {
+    return false;
+  }
+  //return aboveDark(0) && aboveDark(1) && aboveDark(2) && aboveDark(3) && aboveDark(4);
 }
 
 
 bool chargerToRight() //Dersom bare sensorene i midten og til høyre er aktivert er det en lader til høyre
 {
-  return !aboveDark(0) && aboveDark(1) && aboveDark(2) && aboveDark(3) && aboveDark(4);
+  if(chargeCheck()){
+    return !aboveDark(0) && aboveDark(1) && aboveDark(2) && aboveDark(3) && aboveDark(4);
+  }
 }
 
 
@@ -166,27 +251,32 @@ void lineFollow(){
   int16_t spdDiff = error / 4 + (error - lastError);
   lastError = error;
   
-  int spd = 200;  //Topphastighet er 400
+  int spd = 250;  //Topphastighet er 400
   int16_t speedR = spd - spdDiff; //Ex. bil langt til høyre (spd - (-2000)) = 400
   int16_t speedL = spd + spdDiff; //Ex. bil langt til høyre (spd + (-2000)) = 0
 
   motors.setSpeeds(speedL, speedR); //setSpeeds(VENSTRE, HØYRE);
-
+/*
   readSensors();
 
   if(chargerToRight()){
-    buzzer.playNote(NOTE_C(4),100,10);
+    buzzer.playNote(NOTE_C(4),100,15);
 
-    charge(speedL, speedR);
-  }
+    charge();
+  }*/
 }
 
-void charge(int16_t speedL, int16_t speedR){
+
+
+void charge(){
+
+  
   if(chargeCheck()){
     motors.setSpeeds(200, 0);
     delay(500);               //Snu ca. 90 grader høyre
+
     while(!aboveDarkSpot()){  //Imens bilen ikke er ved ladestasjon
-      motors.setSpeeds(speedL, speedR);
+      lineFollow();
     }
     
     placeholdCharge();
@@ -194,10 +284,11 @@ void charge(int16_t speedL, int16_t speedR){
     delay(1500);                 //Snu ca. 180 grader høyre
 
     while(!aboveDarkSpot()){  //Imens bilen ikke er tilbake ved veien
-      motors.setSpeeds(speedL, speedR);
+      lineFollow();
     }
 
     motors.setSpeeds(200, 0);
     delay(500);
+    lineFollow();
   }
 }
