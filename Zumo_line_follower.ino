@@ -82,6 +82,8 @@ bool chargeCheck(){
 
 
 void setup() {
+  
+  Serial1.begin(115200); //Begynner Serial1 med baud-rate til ESP32
 
   lineSensors.initFiveSensors();  //Initierer alle 5 linjefølersensorene, initThreeSensors for bare de 3 midterste
 
