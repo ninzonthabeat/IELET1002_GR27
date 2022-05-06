@@ -59,24 +59,6 @@ void callback(char* topic, byte* message, unsigned int length) {
   }
   Serial.println();
  
-  // Feel free to add more if statements to control more GPIOs with MQTT
- 
-  // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
-  // Changes the output state according to the message
-
-  /*
-  if (String(topic) == "esp32/output") {
-    Serial.print("Changing output to ");
-    if(messageTemp == "on"){
-      Serial.println("on");
-      digitalWrite(ledPin, HIGH);
-    }
-    else if(messageTemp == "off"){
-      Serial.println("off");
-      digitalWrite(ledPin, LOW);
-    }
-      */
-  }
 
 
 // fyller opp trashcan
